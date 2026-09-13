@@ -1,4 +1,4 @@
-- name: Install for PGDG repo
+- name: Install prerequisites
   apt:
     name:
       - python3-debian
@@ -8,7 +8,7 @@
     state: present
     update_cache: yes
 
-- name: Add PGDG repository (deb822 format)
+- name: Add PGDG repository
   deb822_repository:
     name: pgdg
     types: deb
@@ -18,15 +18,15 @@
     signed_by: https://www.postgresql.org/media/keys/ACCC4CF8.asc
     state: present
 
-- name: Install PostgreSQL 16
+- name: Install PostgreSQL
   apt:
     name:
-      - postgresql-16
-      - postgresql-contrib-16
+      - "postgresql-{{ pg_version }}"
+      - "postgresql-contrib-{{ pg_version }}"
     state: present
     update_cache: yes
 
-- name: Disable default postgres user
+- name: Stop and disable default PostgreSQL service
   systemd:
     name: postgresql
     state: stopped
@@ -46,15 +46,15 @@
     name: postgres
     home: /home/postgres
 
-- name: Create PGDATA dir
+- name: Create PGDATA directory
   file:
-    path: /data/16
+    path: "/data/{{ pg_version }}"
     state: directory
     owner: postgres
     group: postgres
     mode: '0700'
 
-- name: Create log dir
+- name: Create log directory
   file:
     path: /data/log
     state: directory
@@ -62,7 +62,7 @@
     group: postgres
     mode: '0755'
 
-- name: Create socket dir
+- name: Create socket directory
   file:
     path: /var/run/postgresql
     state: directory
