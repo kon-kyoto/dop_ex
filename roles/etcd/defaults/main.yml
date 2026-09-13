@@ -1,1 +1,3 @@
 etcd_version: "3.5.15"
+etcd_cluster_token: "etcd_scope"
+etcd_initial_cluster_state: "new"

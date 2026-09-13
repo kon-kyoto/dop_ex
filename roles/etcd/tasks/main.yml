@@ -3,7 +3,6 @@
     name:
       - curl
       - tar
-      - openssl
     state: present
     update_cache: yes
 
@@ -30,8 +29,9 @@
     src: /tmp/etcd.tar.gz
     dest: /tmp
     remote_src: yes
+    creates: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/etcd"
 
-- name: Install etcd
+- name: Install etcd binaries
   copy:
     src: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/{{ item }}"
     dest: "/usr/bin/{{ item }}"
@@ -41,7 +41,7 @@
     - etcd
     - etcdctl
 
-- name: Create etcd dir
+- name: Create etcd directories
   file:
     path: "{{ item }}"
     state: directory
@@ -52,83 +52,6 @@
     - /var/lib/etcd
     - /var/lib/etcd/default
     - /etc/etcd
-    - /etc/default/etcd/.tls
-
-- name: Generate CA key
-  openssl_privatekey:
-    path: /etc/default/etcd/.tls/ca.key
-    size: 4096
-  run_once: true
-  delegate_to: "{{ groups['etcd'][0] }}"
-
-- name: Generate CA cert
-  openssl_csr:
-    path: /etc/default/etcd/.tls/ca.csr
-    privatekey_path: /etc/default/etcd/.tls/ca.key
-    common_name: myorg.com
-  run_once: true
-  delegate_to: "{{ groups['etcd'][0] }}"
-
-- name: Self-sign CA
-  openssl_certificate:
-    path: /etc/default/etcd/.tls/ca.crt
-    csr_path: /etc/default/etcd/.tls/ca.csr
-    privatekey_path: /etc/default/etcd/.tls/ca.key
-    provider: selfsigned
-  run_once: true
-  delegate_to: "{{ groups['etcd'][0] }}"
-
-- name: Generate node keys (on first etcd node)
-  openssl_privatekey:
-    path: "/etc/default/etcd/.tls/{{ item }}.key"
-    size: 4096
-  loop: "{{ groups['etcd'] + groups['servers'] }}"
-  run_once: true
-  delegate_to: "{{ groups['etcd'][0] }}"
-
-- name: Generate node CSRs (on first etcd node)
-  openssl_csr:
-    path: "/etc/default/etcd/.tls/{{ item }}.csr"
-    privatekey_path: "/etc/default/etcd/.tls/{{ item }}.key"
-    common_name: "{{ item }}"
-    subject_alt_name:
-      - "DNS:{{ item }}"
-      - "IP:{{ hostvars[item].ansible_host }}"
-      - "IP:127.0.0.1"
-  loop: "{{ groups['etcd'] + groups['servers'] }}"
-  run_once: true
-  delegate_to: "{{ groups['etcd'][0] }}"
-
-- name: Sign node certs (on first etcd node)
-  openssl_certificate:
-    path: "/etc/default/etcd/.tls/{{ item }}.crt"
-    csr_path: "/etc/default/etcd/.tls/{{ item }}.csr"
-    privatekey_path: /etc/default/etcd/.tls/ca.key
-    provider: ownca
-    ownca_path: /etc/default/etcd/.tls/ca.crt
-    ownca_privatekey_path: /etc/default/etcd/.tls/ca.key
-  loop: "{{ groups['etcd'] + groups['servers'] }}"
-  run_once: true
-  delegate_to: "{{ groups['etcd'][0] }}"
-
-- name: Fix ownership on TLS directory
-  file:
-    path: /etc/default/etcd/.tls
-    state: directory
-    owner: etcd
-    group: etcd
-    mode: '0750'
-    recurse: yes
-
-- name: Fix permissions on TLS private keys
-  file:
-    path: "{{ item }}"
-    owner: etcd
-    group: etcd
-    mode: '0600'
-  loop:
-    - /etc/default/etcd/.tls/ca.key
-    - "/etc/default/etcd/.tls/{{ inventory_hostname }}.key"
 
 - name: Deploy etcd config
   template:
@@ -137,17 +60,17 @@
     owner: etcd
     group: etcd
     mode: '0644'
-  notify: reload systemd and restart etcd
+  notify: restart etcd
 
 - name: Deploy etcd systemd unit
   template:
     src: etcd.service.j2
     dest: /etc/systemd/system/etcd.service
-  notify: reload systemd and restart etcd
+  notify: restart etcd
 
-- name: Start etcd on each node sequentially
+- name: Start etcd
   systemd:
     name: etcd
     state: started
     enabled: yes
-  throttle: 1
+    daemon_reload: yes

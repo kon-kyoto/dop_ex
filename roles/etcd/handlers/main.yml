@@ -1,4 +1,4 @@
-- name: reload systemd and restart etcd
+- name: restart etcd
   systemd:
     name: etcd
     state: restarted
