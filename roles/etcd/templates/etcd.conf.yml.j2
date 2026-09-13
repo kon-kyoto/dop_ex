@@ -1,0 +1,23 @@
+name: {{ inventory_hostname }}
+data-dir: /var/lib/etcd/default
+listen-peer-urls: https://0.0.0.0:2380
+advertise-client-urls: https://{{ inventory_hostname }}:2379
+listen-client-urls: https://0.0.0.0:2379
+initial-advertise-peer-urls: https://{{ inventory_hostname }}:2380
+initial-cluster-token: etcd_scope
+initial-cluster: {% for h in groups['etcd'] %}{{ h }}=https://{{ h }}:2380{{ ',' if not loop.last }}{% endfor %}{{ '\n' }}
+initial-cluster-state: {{ etcd_initial_cluster_state | default('new') }}
+election-timeout: 5000
+heartbeat-interval: 500
+
+client-transport-security:
+  cert-file: /etc/default/etcd/.tls/{{ inventory_hostname }}.crt
+  key-file: /etc/default/etcd/.tls/{{ inventory_hostname }}.key
+  client-cert-auth: true
+  trusted-ca-file: /etc/default/etcd/.tls/ca.crt
+
+peer-transport-security:
+  cert-file: /etc/default/etcd/.tls/{{ inventory_hostname }}.crt
+  key-file: /etc/default/etcd/.tls/{{ inventory_hostname }}.key
+  client-cert-auth: true
+  trusted-ca-file: /etc/default/etcd/.tls/ca.crt
