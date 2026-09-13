@@ -1,0 +1,15 @@
+- name: Init postgres + patroni
+  hosts: servers
+  become: yes
+  pre_tasks:
+    - name: Add all hosts to /etc/hosts
+      blockinfile:
+        path: /etc/hosts
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+        block: |
+          {% for host in groups['all'] %}
+          {{ hostvars[host].ansible_host }}  {{ host }}
+          {% endfor %}
+  roles:
+    - postgresql
+    - patroni

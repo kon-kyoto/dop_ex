@@ -1,0 +1,6 @@
+- name: Init etcd
+  hosts: etcd
+  become: yes
+  roles:
+    - etcd
+
