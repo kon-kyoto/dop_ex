@@ -2,7 +2,8 @@
   hosts: etcd
   become: yes
   roles:
-    - etcd
+    - role: etcd
+      tags: etcd_setup
 
 - name: Init postgres + patroni
   hosts: servers
@@ -16,6 +17,9 @@
           {% for host in groups['all'] %}
           {{ hostvars[host].ansible_host }}  {{ host }}
           {% endfor %}
+      tags: always
   roles:
-    - postgresql
-    - patroni
+    - role: postgresql
+      tags: db_setup
+    - role: patroni
+      tags: patroni_setup
