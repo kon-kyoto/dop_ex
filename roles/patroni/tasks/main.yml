@@ -46,13 +46,16 @@
     owner: postgres
     group: postgres
     mode: '0600'
-  notify: restart patroni
+  notify: Restart patroni
 
 - name: Deploy Patroni systemd unit
-  template:
+  ansible.builtin.template:
     src: patroni.service.j2
     dest: /etc/systemd/system/patroni.service
-  notify: restart patroni
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart patroni
 
 - name: Start Patroni
   systemd:

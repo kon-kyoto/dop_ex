@@ -21,8 +21,8 @@
 - name: Install PostgreSQL
   apt:
     name:
-      - "postgresql-{{ pg_version }}"
-      - "postgresql-contrib-{{ pg_version }}"
+      - "postgresql-{{ postgresql_version }}"
+      - "postgresql-contrib-{{ postgresql_version }}"
     state: present
     update_cache: yes
 
@@ -48,7 +48,7 @@
 
 - name: Create PGDATA directory
   file:
-    path: "/data/{{ pg_version }}"
+    path: "/data/{{ postgresql_version }}"
     state: directory
     owner: postgres
     group: postgres

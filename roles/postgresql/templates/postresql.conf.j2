@@ -1,6 +1,6 @@
 listen_addresses = '*'
 port = 5432
-max_connections = {{ pg_max_connections }}
-shared_buffers = {{ pg_shared_buffers }}
+max_connections = {{ postgresql_max_connections }}
+shared_buffers = {{ postgresql_shared_buffers }}
 wal_level = replica
 hot_standby = on
