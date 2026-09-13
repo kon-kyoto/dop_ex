@@ -3,16 +3,7 @@ all:
     etcd:
       hosts:
         etcd1:
-          ansible_host: 192.168.100.11
-          ansible_user: hex
-          ansible_ssh_private_key_file: ~/.ssh/id_ed25519
     servers:
       hosts:
         server1:
-          ansible_host: 192.168.100.12
-          ansible_user: hex
-          ansible_ssh_private_key_file: ~/.ssh/id_ed25519
         server2:
-          ansible_host: 192.168.100.13
-          ansible_user: hex
-          ansible_ssh_private_key_file: ~/.ssh/id_ed25519

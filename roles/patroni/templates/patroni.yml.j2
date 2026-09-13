@@ -3,7 +3,7 @@ namespace: /patroni
 name: {{ inventory_hostname }}
 
 restapi:
-  listen: 0.0.0.0:8008
+  listen: 0.0.0.0:{{ patroni_restapi_port }}
   connect_address: {{ ansible_host }}:8008
 
 etcd3:
