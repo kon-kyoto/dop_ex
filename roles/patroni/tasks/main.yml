@@ -1,24 +1,21 @@
-- name: Install build deps
+- name: Install build dependencies
   apt:
     name:
       - python3
       - python3-pip
       - python3-venv
       - python3-dev
-      - libssl-dev
-      - libffi-dev
-      - libbz2-dev
       - libpq-dev
       - build-essential
     state: present
     update_cache: yes
 
-- name: Create patroni venv
+- name: Create Patroni venv
   command: python3 -m venv /opt/patroni
   args:
     creates: /opt/patroni/bin/activate
 
-- name: Install patroni
+- name: Install Patroni
   pip:
     name:
       - "patroni[etcd3]"
@@ -26,45 +23,7 @@
     virtualenv: /opt/patroni
     state: present
 
-- name: Create TLS dir
-  file:
-    path: /opt/patroni/.tls
-    state: directory
-    owner: postgres
-    group: postgres
-    mode: '0744'
-
-- name: Fetch CA and server certs from etcd node
-  fetch:
-    src: "/etc/default/etcd/.tls/{{ item }}"
-    dest: "/tmp/certs/"
-    flat: yes
-  delegate_to: "{{ groups['etcd'][0] }}"
-  loop:
-    - ca.crt
-    - "{{ inventory_hostname }}.crt"
-    - "{{ inventory_hostname }}.key"
-
-- name: Copy certs to patroni dir
-  copy:
-    src: "/tmp/certs/{{ item }}"
-    dest: "/opt/patroni/.tls/{{ item }}"
-    owner: postgres
-    group: postgres
-    mode: '0600'
-  loop:
-    - ca.crt
-    - "{{ inventory_hostname }}.crt"
-    - "{{ inventory_hostname }}.key"
-
-- name: Create log dir
-  file:
-    path: /data/log/patroni
-    state: directory
-    owner: postgres
-    group: postgres
-
-- name: Create patroni config directory
+- name: Create Patroni config directory
   file:
     path: /etc/patroni
     state: directory
@@ -72,7 +31,15 @@
     group: postgres
     mode: '0750'
 
-- name: Deploy patroni config
+- name: Create Patroni log directory
+  file:
+    path: /data/log/patroni
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Deploy Patroni config
   template:
     src: patroni.yml.j2
     dest: /etc/patroni/config.yml
@@ -81,17 +48,13 @@
     mode: '0600'
   notify: restart patroni
 
-- name: Check config
-  command: /opt/patroni/bin/patroni --validate-config /etc/patroni/config.yml
-  changed_when: false
-
-- name: Deploy patroni unit
+- name: Deploy Patroni systemd unit
   template:
     src: patroni.service.j2
     dest: /etc/systemd/system/patroni.service
   notify: restart patroni
 
-- name: Start patroni
+- name: Start Patroni
   systemd:
     name: patroni
     state: started
